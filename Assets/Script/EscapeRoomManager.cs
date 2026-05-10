@@ -67,6 +67,10 @@ public class EscapeRoomManager : MonoBehaviour
         if (movingCamera) return;
         if (playerCamera == null) return;
         if (computerViewTarget == null) return;
+        if (playerController != null)
+        {
+            playerController.enabled = false;
+        }
 
         usingComputer = true;
 
@@ -97,6 +101,10 @@ public class EscapeRoomManager : MonoBehaviour
         if (!usingComputer) return;
         if (movingCamera) return;
         if (playerCamera == null) return;
+        if (playerController != null)
+        {
+            playerController.enabled = true;
+        }
 
         if (computerCanvas != null)
         {
