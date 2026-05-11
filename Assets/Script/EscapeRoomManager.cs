@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class EscapeRoomManager : MonoBehaviour
 {
@@ -9,10 +10,15 @@ public class EscapeRoomManager : MonoBehaviour
     [Header("Player / Camera")]
     public Transform playerCamera;
     public FirstPersonController playerController;
-    public Transform computerViewTarget;
 
-    [Header("Computer UI")]
+    [Header("Computer")]
+    public Transform computerViewTarget;
     public GameObject computerCanvas;
+    public MonitorStaticEffect monitorStaticEffect;
+
+    [Header("Keypad")]
+    public Transform keypadViewTarget;
+    public GameObject doorKeypadPanel;
 
     [Header("HUD")]
     public GameObject crosshair;
@@ -21,9 +27,9 @@ public class EscapeRoomManager : MonoBehaviour
     public TMP_InputField doorCodeInput;
     public TMP_Text doorMessageText;
     public string correctDoorCode = "7392";
-    public Transform door;
-    public Vector3 doorOpenRotation = new Vector3(0f, 90f, 0f);
-    public float doorOpenDuration = 1f;
+
+    [Header("Ending")]
+    public string endingSceneName = "EndingScene";
 
     [Header("Camera Zoom Settings")]
     public float zoomDuration = 0.7f;
@@ -32,8 +38,9 @@ public class EscapeRoomManager : MonoBehaviour
     Quaternion originalCameraRotation;
 
     bool usingComputer;
+    bool usingKeypad;
     bool movingCamera;
-    bool doorOpened;
+    bool gameEnded;
 
     void Awake()
     {
@@ -45,6 +52,11 @@ public class EscapeRoomManager : MonoBehaviour
         if (computerCanvas != null)
         {
             computerCanvas.SetActive(false);
+        }
+
+        if (doorKeypadPanel != null)
+        {
+            doorKeypadPanel.SetActive(false);
         }
 
         if (doorMessageText != null)
@@ -63,20 +75,90 @@ public class EscapeRoomManager : MonoBehaviour
 
     public void EnterComputer()
     {
-        if (usingComputer) return;
+        if (usingComputer || usingKeypad) return;
         if (movingCamera) return;
-        if (playerCamera == null) return;
-        if (computerViewTarget == null) return;
-        if (playerController != null)
-        {
-            playerController.enabled = false;
-        }
+        if (gameEnded) return;
+        if (playerCamera == null || computerViewTarget == null) return;
 
         usingComputer = true;
 
         originalCameraPosition = playerCamera.position;
         originalCameraRotation = playerCamera.rotation;
 
+        FreezePlayer();
+
+        StartCoroutine(MoveCameraRoutine(
+            playerCamera.position,
+            playerCamera.rotation,
+            computerViewTarget.position,
+            computerViewTarget.rotation,
+            true,
+            false
+        ));
+    }
+
+    public void ExitComputer()
+    {
+        if (!usingComputer) return;
+        if (movingCamera) return;
+
+        if (computerCanvas != null)
+        {
+            computerCanvas.SetActive(false);
+        }
+
+        StartCoroutine(ReturnCameraRoutine());
+    }
+
+    public void OpenKeypad()
+    {
+        if (usingComputer || usingKeypad) return;
+        if (movingCamera) return;
+        if (gameEnded) return;
+        if (playerCamera == null || keypadViewTarget == null) return;
+
+        usingKeypad = true;
+
+        originalCameraPosition = playerCamera.position;
+        originalCameraRotation = playerCamera.rotation;
+
+        FreezePlayer();
+
+        if (doorMessageText != null)
+        {
+            doorMessageText.text = "";
+        }
+
+        if (doorCodeInput != null)
+        {
+            doorCodeInput.text = "";
+        }
+
+        StartCoroutine(MoveCameraRoutine(
+            playerCamera.position,
+            playerCamera.rotation,
+            keypadViewTarget.position,
+            keypadViewTarget.rotation,
+            false,
+            true
+        ));
+    }
+
+    public void CloseKeypad()
+    {
+        if (!usingKeypad) return;
+        if (movingCamera) return;
+
+        if (doorKeypadPanel != null)
+        {
+            doorKeypadPanel.SetActive(false);
+        }
+
+        StartCoroutine(ReturnCameraRoutine());
+    }
+
+    void FreezePlayer()
+    {
         if (playerController != null)
         {
             playerController.enabled = false;
@@ -86,38 +168,22 @@ public class EscapeRoomManager : MonoBehaviour
         {
             crosshair.SetActive(false);
         }
-
-        StartCoroutine(MoveCameraRoutine(
-            playerCamera.position,
-            playerCamera.rotation,
-            computerViewTarget.position,
-            computerViewTarget.rotation,
-            true
-        ));
     }
 
-    public void ExitComputer()
+    void UnfreezePlayer()
     {
-        if (!usingComputer) return;
-        if (movingCamera) return;
-        if (playerCamera == null) return;
         if (playerController != null)
         {
             playerController.enabled = true;
         }
 
-        if (computerCanvas != null)
+        if (crosshair != null)
         {
-            computerCanvas.SetActive(false);
+            crosshair.SetActive(true);
         }
 
-        StartCoroutine(MoveCameraRoutine(
-            playerCamera.position,
-            playerCamera.rotation,
-            originalCameraPosition,
-            originalCameraRotation,
-            false
-        ));
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     IEnumerator MoveCameraRoutine(
@@ -125,7 +191,8 @@ public class EscapeRoomManager : MonoBehaviour
         Quaternion startRotation,
         Vector3 endPosition,
         Quaternion endRotation,
-        bool showComputerAfterMove)
+        bool openComputerAfterMove,
+        bool openKeypadAfterMove)
     {
         movingCamera = true;
 
@@ -147,47 +214,70 @@ public class EscapeRoomManager : MonoBehaviour
         playerCamera.position = endPosition;
         playerCamera.rotation = endRotation;
 
-        if (showComputerAfterMove)
+        if (openComputerAfterMove && computerCanvas != null)
         {
-            if (computerCanvas != null)
-            {
-                computerCanvas.SetActive(true);
-            }
+            computerCanvas.SetActive(true);
 
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            if (monitorStaticEffect != null)
+            {
+                monitorStaticEffect.PlayEffect();
+            }
         }
-        else
+
+        if (openKeypadAfterMove && doorKeypadPanel != null)
         {
-            usingComputer = false;
-
-            if (playerController != null)
-            {
-                playerController.enabled = true;
-            }
-
-            if (crosshair != null)
-            {
-                crosshair.SetActive(true);
-            }
-
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            doorKeypadPanel.SetActive(true);
         }
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        movingCamera = false;
+    }
+
+    IEnumerator ReturnCameraRoutine()
+    {
+        movingCamera = true;
+
+        Vector3 startPosition = playerCamera.position;
+        Quaternion startRotation = playerCamera.rotation;
+
+        float timer = 0f;
+
+        while (timer < zoomDuration)
+        {
+            timer += Time.deltaTime;
+
+            float t = timer / zoomDuration;
+            t = Mathf.SmoothStep(0f, 1f, t);
+
+            playerCamera.position = Vector3.Lerp(startPosition, originalCameraPosition, t);
+            playerCamera.rotation = Quaternion.Slerp(startRotation, originalCameraRotation, t);
+
+            yield return null;
+        }
+
+        playerCamera.position = originalCameraPosition;
+        playerCamera.rotation = originalCameraRotation;
+
+        usingComputer = false;
+        usingKeypad = false;
+
+        UnfreezePlayer();
 
         movingCamera = false;
     }
 
     public void SubmitDoorCode()
     {
-        if (doorOpened) return;
+        if (gameEnded) return;
         if (doorCodeInput == null) return;
 
         string input = doorCodeInput.text.Trim();
 
         if (input == correctDoorCode)
         {
-            OpenDoor();
+            GoToEndingScene();
         }
         else
         {
@@ -200,41 +290,19 @@ public class EscapeRoomManager : MonoBehaviour
         }
     }
 
-    void OpenDoor()
+    void GoToEndingScene()
     {
-        doorOpened = true;
+        gameEnded = true;
 
         if (doorMessageText != null)
         {
-            doorMessageText.text = "Door unlocked.";
+            doorMessageText.text = "Access granted.";
         }
 
-        if (door != null)
-        {
-            StartCoroutine(OpenDoorRoutine());
-        }
-    }
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 
-    IEnumerator OpenDoorRoutine()
-    {
-        Quaternion startRotation = door.localRotation;
-        Quaternion endRotation = Quaternion.Euler(doorOpenRotation);
-
-        float timer = 0f;
-
-        while (timer < doorOpenDuration)
-        {
-            timer += Time.deltaTime;
-
-            float t = timer / doorOpenDuration;
-            t = Mathf.SmoothStep(0f, 1f, t);
-
-            door.localRotation = Quaternion.Slerp(startRotation, endRotation, t);
-
-            yield return null;
-        }
-
-        door.localRotation = endRotation;
+        SceneManager.LoadScene(endingSceneName);
     }
 
     public bool IsUsingComputer()
@@ -242,8 +310,8 @@ public class EscapeRoomManager : MonoBehaviour
         return usingComputer;
     }
 
-    public bool IsDoorOpened()
+    public bool IsUsingKeypad()
     {
-        return doorOpened;
+        return usingKeypad;
     }
 }

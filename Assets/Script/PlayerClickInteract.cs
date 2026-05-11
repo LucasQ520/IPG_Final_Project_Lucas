@@ -6,9 +6,10 @@ public class PlayerClickInteract : MonoBehaviour
 
     void Update()
     {
-        if (EscapeRoomManager.instance != null && EscapeRoomManager.instance.IsUsingComputer())
+        if (EscapeRoomManager.instance != null)
         {
-            return;
+            if (EscapeRoomManager.instance.IsUsingComputer()) return;
+            if (EscapeRoomManager.instance.IsUsingKeypad()) return;
         }
 
         if (Input.GetMouseButtonDown(0))
@@ -19,10 +20,17 @@ public class PlayerClickInteract : MonoBehaviour
             if (Physics.Raycast(ray, out hit, interactDistance))
             {
                 ComputerInteract computer = hit.collider.GetComponent<ComputerInteract>();
-
                 if (computer != null)
                 {
                     computer.OpenComputer();
+                    return;
+                }
+
+                KeypadInteract keypad = hit.collider.GetComponent<KeypadInteract>();
+                if (keypad != null)
+                {
+                    keypad.OpenKeypad();
+                    return;
                 }
             }
         }
