@@ -68,7 +68,7 @@ public class ComputerLoginManager : MonoBehaviour
 
         string input = codeInput.text.Trim();
 
-        if (input == correctComputerCode)
+        if (EscapeRoomManager.instance != null && input == EscapeRoomManager.instance.generatedComputerCode)
         {
             OpenDesktop();
         }

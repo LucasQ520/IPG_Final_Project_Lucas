@@ -20,6 +20,11 @@ public class EscapeRoomManager : MonoBehaviour
     public Transform keypadViewTarget;
     public GameObject doorKeypadPanel;
 
+    [Header("Paper Clue")]
+    public GameObject paperCluePanel;
+    public TMP_Text paperCodeText;
+    public string generatedComputerCode;
+
     [Header("HUD")]
     public GameObject crosshair;
 
@@ -37,8 +42,11 @@ public class EscapeRoomManager : MonoBehaviour
     Vector3 originalCameraPosition;
     Quaternion originalCameraRotation;
 
+    GameObject currentPaperObject;
+
     bool usingComputer;
     bool usingKeypad;
+    bool readingPaper;
     bool movingCamera;
     bool gameEnded;
 
@@ -49,6 +57,8 @@ public class EscapeRoomManager : MonoBehaviour
 
     void Start()
     {
+        generatedComputerCode = Random.Range(100000, 1000000).ToString();
+
         if (computerCanvas != null)
         {
             computerCanvas.SetActive(false);
@@ -59,9 +69,19 @@ public class EscapeRoomManager : MonoBehaviour
             doorKeypadPanel.SetActive(false);
         }
 
+        if (paperCluePanel != null)
+        {
+            paperCluePanel.SetActive(false);
+        }
+
         if (doorMessageText != null)
         {
             doorMessageText.text = "";
+        }
+
+        if (paperCodeText != null)
+        {
+            paperCodeText.text = generatedComputerCode;
         }
 
         if (crosshair != null)
@@ -75,7 +95,7 @@ public class EscapeRoomManager : MonoBehaviour
 
     public void EnterComputer()
     {
-        if (usingComputer || usingKeypad) return;
+        if (usingComputer || usingKeypad || readingPaper) return;
         if (movingCamera) return;
         if (gameEnded) return;
         if (playerCamera == null || computerViewTarget == null) return;
@@ -112,7 +132,7 @@ public class EscapeRoomManager : MonoBehaviour
 
     public void OpenKeypad()
     {
-        if (usingComputer || usingKeypad) return;
+        if (usingComputer || usingKeypad || readingPaper) return;
         if (movingCamera) return;
         if (gameEnded) return;
         if (playerCamera == null || keypadViewTarget == null) return;
@@ -155,6 +175,51 @@ public class EscapeRoomManager : MonoBehaviour
         }
 
         StartCoroutine(ReturnCameraRoutine());
+    }
+
+    public void OpenPaperClue(GameObject paperObject)
+    {
+        if (usingComputer || usingKeypad || readingPaper) return;
+        if (movingCamera) return;
+        if (gameEnded) return;
+
+        readingPaper = true;
+        currentPaperObject = paperObject;
+
+        FreezePlayer();
+
+        if (paperCodeText != null)
+        {
+            paperCodeText.text = generatedComputerCode;
+        }
+
+        if (paperCluePanel != null)
+        {
+            paperCluePanel.SetActive(true);
+        }
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    public void ClosePaperClue()
+    {
+        if (!readingPaper) return;
+
+        if (paperCluePanel != null)
+        {
+            paperCluePanel.SetActive(false);
+        }
+
+        if (currentPaperObject != null)
+        {
+            currentPaperObject.SetActive(false);
+            currentPaperObject = null;
+        }
+
+        readingPaper = false;
+
+        UnfreezePlayer();
     }
 
     void FreezePlayer()
@@ -214,9 +279,12 @@ public class EscapeRoomManager : MonoBehaviour
         playerCamera.position = endPosition;
         playerCamera.rotation = endRotation;
 
-        if (openComputerAfterMove && computerCanvas != null)
+        if (openComputerAfterMove)
         {
-            computerCanvas.SetActive(true);
+            if (computerCanvas != null)
+            {
+                computerCanvas.SetActive(true);
+            }
 
             if (monitorStaticEffect != null)
             {
@@ -281,23 +349,16 @@ public class EscapeRoomManager : MonoBehaviour
         }
         else
         {
-            if (doorMessageText != null)
+            if (doorCodeInput != null)
             {
-                doorMessageText.text = "Wrong code.";
+                doorCodeInput.text = "";
             }
-
-            doorCodeInput.text = "";
         }
     }
 
     void GoToEndingScene()
     {
         gameEnded = true;
-
-        if (doorMessageText != null)
-        {
-            doorMessageText.text = "Access granted.";
-        }
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -313,5 +374,10 @@ public class EscapeRoomManager : MonoBehaviour
     public bool IsUsingKeypad()
     {
         return usingKeypad;
+    }
+
+    public bool IsReadingPaper()
+    {
+        return readingPaper;
     }
 }
