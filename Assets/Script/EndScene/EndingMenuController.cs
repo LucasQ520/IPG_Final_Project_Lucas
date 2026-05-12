@@ -3,7 +3,7 @@ using UnityEngine.SceneManagement;
 
 public class EndingMenuController : MonoBehaviour
 {
-    public string gameSceneName = "GameScene";
+    public string gameSceneName = "Main";
 
     public void RestartGame()
     {
