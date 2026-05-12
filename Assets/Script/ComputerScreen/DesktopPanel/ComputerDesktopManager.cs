@@ -2,12 +2,19 @@ using UnityEngine;
 
 public class ComputerDesktopManager : MonoBehaviour
 {
+    public static ComputerDesktopManager instance;
+
     [Header("Windows")]
     public GameObject myComputerWindow;
     public GameObject documentsWindow;
     public GameObject settingsWindow;
     public GameObject notesWindow;
     public GameObject recycleBinWindow;
+
+    void Awake()
+    {
+        instance = this;
+    }
 
     void Start()
     {
@@ -19,29 +26,14 @@ public class ComputerDesktopManager : MonoBehaviour
         OpenWindow(myComputerWindow);
     }
 
-    public void OpenDocuments()
-    {
-        OpenWindow(documentsWindow);
-    }
-
-    public void OpenSettings()
-    {
-        OpenWindow(settingsWindow);
-    }
-
-    public void OpenNotes()
-    {
-        OpenWindow(notesWindow);
-    }
-
-    public void OpenRecycleBin()
-    {
-        OpenWindow(recycleBinWindow);
-    }
-
     public void CloseMyComputer()
     {
         CloseWindow(myComputerWindow);
+    }
+
+    public void OpenDocuments()
+    {
+        OpenWindow(documentsWindow);
     }
 
     public void CloseDocuments()
@@ -49,14 +41,29 @@ public class ComputerDesktopManager : MonoBehaviour
         CloseWindow(documentsWindow);
     }
 
+    public void OpenSettings()
+    {
+        OpenWindow(settingsWindow);
+    }
+
     public void CloseSettings()
     {
         CloseWindow(settingsWindow);
     }
 
+    public void OpenNotes()
+    {
+        OpenWindow(notesWindow);
+    }
+
     public void CloseNotes()
     {
         CloseWindow(notesWindow);
+    }
+
+    public void OpenRecycleBin()
+    {
+        OpenWindow(recycleBinWindow);
     }
 
     public void CloseRecycleBin()

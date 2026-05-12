@@ -6,7 +6,7 @@ public class ComputerInteract : MonoBehaviour
     {
         if (EscapeRoomManager.instance != null)
         {
-            EscapeRoomManager.instance.EnterComputer();
+            EscapeRoomManager.instance.OpenComputer();
         }
     }
 }

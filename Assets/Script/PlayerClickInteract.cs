@@ -30,7 +30,7 @@ public class PlayerClickInteract : MonoBehaviour
                     return;
                 }
 
-                KeypadInteract keypad = hits[i].collider.GetComponent<KeypadInteract>();
+                KeypadInteract keypad = hits[i].collider.GetComponentInParent<KeypadInteract>();
 
                 if (keypad != null)
                 {

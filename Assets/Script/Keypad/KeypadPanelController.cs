@@ -6,95 +6,98 @@ public class KeypadPanelController : MonoBehaviour
 {
     [Header("Display")]
     public TMP_InputField codeInput;
-    public int maxCodeLength = 6;
+    public int maxDigits = 6;
 
-    [Header("Shake")]
+    [Header("Wrong Code Shake")]
     public RectTransform shakeTarget;
     public float shakeDuration = 0.25f;
     public float shakeAmount = 10f;
 
+    string currentInput = "";
     bool shaking;
 
     void OnEnable()
     {
-        ClearCode();
+        ClearInput();
     }
 
-    void Update()
+    public void PressDigit(string digit)
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (currentInput.Length >= maxDigits) return;
+
+        currentInput += digit;
+        UpdateDisplay();
+    }
+
+    public void PressZero()
+    {
+        PressDigit("0");
+    }
+
+    public void PressOne()
+    {
+        PressDigit("1");
+    }
+
+    public void PressTwo()
+    {
+        PressDigit("2");
+    }
+
+    public void PressThree()
+    {
+        PressDigit("3");
+    }
+
+    public void PressFour()
+    {
+        PressDigit("4");
+    }
+
+    public void PressFive()
+    {
+        PressDigit("5");
+    }
+
+    public void PressSix()
+    {
+        PressDigit("6");
+    }
+
+    public void PressSeven()
+    {
+        PressDigit("7");
+    }
+
+    public void PressEight()
+    {
+        PressDigit("8");
+    }
+
+    public void PressNine()
+    {
+        PressDigit("9");
+    }
+
+    public void ClearInput()
+    {
+        currentInput = "";
+        UpdateDisplay();
+    }
+
+    public void SubmitCode()
+    {
+        if (DoorCodeManager.instance != null && DoorCodeManager.instance.CheckDoorCode(currentInput))
         {
             if (EscapeRoomManager.instance != null)
             {
-                EscapeRoomManager.instance.CloseKeypad();
+                EscapeRoomManager.instance.GoToEndingScene();
             }
         }
-    }
-
-    public void Press1()
-    {
-        AddNumber("1");
-    }
-
-    public void Press2()
-    {
-        AddNumber("2");
-    }
-
-    public void Press3()
-    {
-        AddNumber("3");
-    }
-
-    public void Press4()
-    {
-        AddNumber("4");
-    }
-
-    public void Press5()
-    {
-        AddNumber("5");
-    }
-
-    public void Press6()
-    {
-        AddNumber("6");
-    }
-
-    public void Press7()
-    {
-        AddNumber("7");
-    }
-
-    public void Press8()
-    {
-        AddNumber("8");
-    }
-
-    public void Press9()
-    {
-        AddNumber("9");
-    }
-
-    public void Press0()
-    {
-        AddNumber("0");
-    }
-
-    public void PressStar()
-    {
-        ClearCode();
-    }
-
-    public void PressPound()
-    {
-        if (EscapeRoomManager.instance != null)
+        else
         {
-            EscapeRoomManager.instance.SubmitDoorCode();
-        }
+            ClearInput();
 
-        if (codeInput != null && codeInput.text != EscapeRoomManager.instance.correctDoorCode)
-        {
             if (!shaking && shakeTarget != null)
             {
                 StartCoroutine(ShakeRoutine());
@@ -102,19 +105,11 @@ public class KeypadPanelController : MonoBehaviour
         }
     }
 
-    void AddNumber(string number)
-    {
-        if (codeInput == null) return;
-        if (codeInput.text.Length >= maxCodeLength) return;
-
-        codeInput.text += number;
-    }
-
-    void ClearCode()
+    void UpdateDisplay()
     {
         if (codeInput != null)
         {
-            codeInput.text = "";
+            codeInput.text = currentInput;
         }
     }
 
@@ -127,7 +122,7 @@ public class KeypadPanelController : MonoBehaviour
 
         while (timer < shakeDuration)
         {
-            timer += Time.deltaTime;
+            timer += Time.unscaledDeltaTime;
 
             float x = Random.Range(-1f, 1f) * shakeAmount;
             shakeTarget.anchoredPosition = originalPosition + new Vector2(x, 0f);
