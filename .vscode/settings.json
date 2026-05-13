@@ -66,5 +66,5 @@
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj"
     },
-    "dotnet.defaultSolution": "IPG_Final_Project_Lucas.sln"
+    "dotnet.defaultSolution": "IPG_Final_Project.sln"
 }
